@@ -69,4 +69,8 @@ func (cd *Iconv) Conv(input string) (result string, err os.Error) {
 }
 
 func Conv(tocode string, fromcode string, input string) (string, os.Error) {
+	c, openError := Open(tocode, fromcode)
+	if openError != nil { return "", openError }
+	defer c.Close()
+	return c.Conv(input)
 }
