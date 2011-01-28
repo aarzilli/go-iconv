@@ -46,16 +46,27 @@ func (cd *Iconv) Conv(input string) (result string, err os.Error) {
 	inptr := &inbuf[0]
 
 	for inbytes > 0 {
+		prev_inbytes := inbytes
 		outbytes := C.size_t(len(outbuf))
 		outptr := &outbuf[0]
 		_, err = C.iconv(cd.pointer,
 			(**C.char)(unsafe.Pointer(&inptr)), &inbytes,
 			(**C.char)(unsafe.Pointer(&outptr)), &outbytes)
 		buf.Write(outbuf[:len(outbuf)-int(outbytes)])
-		if err != nil && err != E2BIG {
-			return buf.String(), err
+		if err != nil {
+			if err == E2BIG {
+				if prev_inbytes == inbytes {
+					// Couldn't progress because the output doesn't fit in the buffer, should grow the buffer
+					outbuf = make([]byte, len(outbuf)*2)
+				}
+			} else {
+				return buf.String(), err
+			}
 		}
 	}
 
 	return buf.String(), nil
+}
+
+func Conv(tocode string, fromcode string, input string) (string, os.Error) {
 }
